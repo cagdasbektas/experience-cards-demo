@@ -267,6 +267,7 @@ I18N: Dict[str, Dict[str, str]] = {
     },
 }
 
+
 REGION_LANGS = {"ca": ["en", "fr"], "us": ["en", "es"]}
 
 
@@ -534,6 +535,7 @@ def ensure_demo_db_seeded_only() -> None:
         ("CA: App language barriers and safe coping strategies", "Digital Access",
          "language,accessibility,help,canada",
          "I struggled with English-only screens in a banking app. Instead of sharing passwords with others, I used built-in accessibility features and kept notes of key menu terms. When needed, I asked for guidance through official support channels. This helped me avoid risky shortcuts while still completing tasks.",
+
          "en", now),
         ("CA: Debit vs credit card as a newcomer", "Cards",
          "debit,credit,credit_history,newcomer,canada",
@@ -802,6 +804,7 @@ def page_html(region: str, lang: str, presentation: str) -> str:
     title_text = t(lang, "app_title_demo") if pres_on else t(lang, "app_title")
 
     pills = f"""
+
       <span class="pill">{t(lang, "pill_safe")}</span>
       <span class="pill">{t(lang, "pill_retrieval")}</span>
     """
@@ -1070,20 +1073,19 @@ def page_html(region: str, lang: str, presentation: str) -> str:
 # Routes
 # ----------------------------
 @app.get("/", response_class=HTMLResponse)
+
 def home(request: Request):
     region = request.query_params.get("region", "ca").lower()
     lang = request.query_params.get("lang", "en").lower()
     presentation = request.query_params.get("presentation", "1")
-    presentation = "1"
-return HTMLResponse(page_html(region, lang, presentation))
-
+    return HTMLResponse(page_html(region, lang, presentation))
 
 
 @app.get("/cards", response_class=HTMLResponse)
 def cards(request: Request):
     region = request.query_params.get("region", "ca").lower()
     lang = request.query_params.get("lang", "en").lower()
-    presentation = request.query_params.get("presentation", "0")
+    presentation = request.query_params.get("presentation", "1")
 
     if region not in ("ca", "us"):
         region = "ca"
@@ -1160,7 +1162,7 @@ def cards(request: Request):
 def admin(request: Request):
     region = request.query_params.get("region", "ca").lower()
     lang = request.query_params.get("lang", "en").lower()
-    presentation = request.query_params.get("presentation", "0")
+    presentation = request.query_params.get("presentation", "1")
 
     # Admin is only available in normal mode
     if presentation == "1":
@@ -1275,7 +1277,7 @@ def admin_add(
 ):
     region = request.query_params.get("region", "ca").lower()
     lang = request.query_params.get("lang", "en").lower()
-    presentation = request.query_params.get("presentation", "0")
+    presentation = request.query_params.get("presentation", "1")
 
     if presentation == "1":
         raise HTTPException(status_code=403, detail="Admin is disabled in presentation mode.")
@@ -1334,7 +1336,3 @@ def ask(payload: Dict[str, Any]):
     demo_region_filter = (presentation == "1")
     matches = get_top_matches(db_path, question, region=region, demo_region_filter=demo_region_filter, limit=MAX_MATCHES)
     return JSONResponse({"question": question, "matches": matches})
-
-
-
-
