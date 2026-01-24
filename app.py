@@ -1073,7 +1073,7 @@ def page_html(region: str, lang: str, presentation: str) -> str:
 def home(request: Request):
     region = request.query_params.get("region", "ca").lower()
     lang = request.query_params.get("lang", "en").lower()
-    presentation = request.query_params.get("presentation", "0")
+    presentation = request.query_params.get("presentation", "1")
     return HTMLResponse(page_html(region, lang, presentation))
 
 
@@ -1332,5 +1332,6 @@ def ask(payload: Dict[str, Any]):
     demo_region_filter = (presentation == "1")
     matches = get_top_matches(db_path, question, region=region, demo_region_filter=demo_region_filter, limit=MAX_MATCHES)
     return JSONResponse({"question": question, "matches": matches})
+
 
 
