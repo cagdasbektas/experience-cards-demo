@@ -68,6 +68,7 @@ I18N: Dict[str, Dict[str, str]] = {
         "app_title": "Experience Cards",
         "app_title_demo": "Experience Cards Demo",
         "subtitle": "Safety-first, explainable support for digital banking (retrieval-only)",
+        "na_note": "Curated experience examples from North America (Canada + US).",
         "region_label": "Region",
         "region_ca": "Canada",
         "region_us": "United States",
@@ -135,6 +136,7 @@ I18N: Dict[str, Dict[str, str]] = {
         "app_title": "Cartes d’Expérience",
         "app_title_demo": "Démo de Cartes d’Expérience",
         "subtitle": "Assistance explicable et prudente pour la banque numérique (recherche uniquement)",
+        "na_note": "Exemples d’expériences sélectionnées d’Amérique du Nord (Canada + États-Unis).",
         "region_label": "Région",
         "region_ca": "Canada",
         "region_us": "États-Unis",
@@ -202,6 +204,7 @@ I18N: Dict[str, Dict[str, str]] = {
         "app_title": "Tarjetas de Experiencia",
         "app_title_demo": "Demo de Tarjetas de Experiencia",
         "subtitle": "Soporte explicable y seguro para banca digital (solo recuperación)",
+        "na_note": "Ejemplos seleccionados de experiencias de América del Norte (Canadá + EE. UU.).",
         "region_label": "Región",
         "region_ca": "Canadá",
         "region_us": "Estados Unidos",
@@ -267,7 +270,8 @@ I18N: Dict[str, Dict[str, str]] = {
     },
 }
 
-REGION_LANGS = {"ca": ["en", "fr"], "us": ["en", "es"]}
+
+REGION_LANGS = {"na": ["en"], "ca": ["en", "fr"], "us": ["en", "es"]}
 
 
 def t(lang: str, key: str) -> str:
@@ -451,12 +455,16 @@ def score_experience(question: str, exp: sqlite3.Row) -> Dict[str, Any]:
 
 def _region_clause(region: str) -> Tuple[str, Tuple[Any, ...]]:
     """
-    Since we don't store a separate region column, we filter demo cards by tags.
-    Seeded cards include 'canada' or 'usa' in tags.
+    Demo cards are filtered by tags. Seeded cards include 'canada' or 'usa' in tags.
+    - ca -> only Canada cards
+    - us -> only USA cards
+    - na -> no filter (Canada + USA together)
     """
     if region == "us":
         return "(tags LIKE ?)", ("%usa%",)
-    return "(tags LIKE ?)", ("%canada%",)
+    if region == "ca":
+        return "(tags LIKE ?)", ("%canada%",)
+    return "1=1", tuple()
 
 
 def get_top_matches(
@@ -511,63 +519,64 @@ def ensure_demo_db_seeded_only() -> None:
 
     # Canada 15 (English content)
     seed_cards += [
-        ("CA: Newcomer account opening at a branch", "Onboarding",
+        ("Newcomer account opening at a branch", "Onboarding",
          "newcomer,account,documents,branch,canada",
          "When I first arrived in Canada, I wanted to open a bank account and was unsure about the required documents. I brought my passport and immigration papers to a branch and explained my situation. The staff clarified which newcomer options were available and which documents were acceptable at that stage. Requirements can vary by institution, so asking directly helped me move forward quickly.",
          "en", now),
-        ("CA: Can I open an account without a SIN yet?", "Onboarding",
+        ("Can I open an account without a SIN yet?", "Onboarding",
          "sin,identity,newcomer,requirements,canada",
          "I was confused about whether I needed a SIN to open a bank account. At the branch, I asked what was possible before my SIN was issued. The representative explained that some banks allow account opening without a SIN initially, sometimes with limitations. I was told I could update my profile later once my SIN became available.",
          "en", now),
-        ("CA: No permanent address during onboarding", "Onboarding",
+        ("No permanent address during onboarding", "Onboarding",
          "address,newcomer,temporary,documents,canada",
          "When opening an account, I did not have a permanent address yet. I explained that I was in temporary housing and provided a temporary address for initial setup. The bank accepted it and advised me to update the address later. That allowed me to get started without waiting for permanent housing.",
          "en", now),
-        ("CA: Mobile banking first-time secure setup", "Digital Access",
+        ("Mobile banking first-time secure setup", "Digital Access",
          "mobile,security,2fa,password,canada",
          "When I started using mobile banking, I focused on secure setup. I enabled two-factor authentication, created a strong password, and installed the app only from the official store. I avoided public Wi-Fi for login and reviewed security settings in the app. These steps made me feel more confident using digital banking.",
          "en", now),
-        ("CA: Forgot password and avoided lockout", "Digital Access",
+        ("Forgot password and avoided lockout", "Digital Access",
          "password,login,reset,lockout,canada",
          "After forgetting my password, I used the official reset flow in the app. I followed identity verification steps carefully and avoided repeated attempts that could trigger a lockout. After the reset, I confirmed I could log in successfully and updated any saved credentials on my device.",
          "en", now),
-        ("CA: App language barriers and safe coping strategies", "Digital Access",
+        ("App language barriers and safe coping strategies", "Digital Access",
          "language,accessibility,help,canada",
          "I struggled with English-only screens in a banking app. Instead of sharing passwords with others, I used built-in accessibility features and kept notes of key menu terms. When needed, I asked for guidance through official support channels. This helped me avoid risky shortcuts while still completing tasks.",
+
          "en", now),
-        ("CA: Debit vs credit card as a newcomer", "Cards",
+        ("Debit vs credit card as a newcomer", "Cards",
          "debit,credit,credit_history,newcomer,canada",
          "I was unsure whether to use debit or apply for a credit card. I learned that debit is useful for everyday spending, while a credit card can help build credit history if used responsibly. I started with simple spending limits, paid balances on time, and monitored transactions regularly.",
          "en", now),
-        ("CA: Card declined due to limits or fraud protection", "Cards",
+        ("Card declined due to limits or fraud protection", "Cards",
          "card,declined,limits,fraud_protection,canada",
          "My card was declined at a merchant, and I did not know why. I checked my daily limits and whether the bank had flagged the transaction for security. I verified the card status in the app and tried a smaller transaction later. The issue turned out to be a security hold, which cleared after confirmation through official channels.",
          "en", now),
-        ("CA: Contactless tap payments safety basics", "Payments",
+        ("Contactless tap payments safety basics", "Payments",
          "contactless,tap,limits,security,canada",
          "I wondered whether tap payments were safe. I learned that contactless has transaction limits and that I can review settings and monitor transactions in the app. I kept notifications enabled and reported anything suspicious quickly. This made contactless payments feel safer and more manageable.",
          "en", now),
-        ("CA: CRA phone call scam recognition", "Fraud/Scam",
+        ("CRA phone call scam recognition", "Fraud/Scam",
          "cra,scam,phone,phishing,canada",
          "I received a call claiming to be from the CRA and demanding immediate payment. I did not share any personal information and ended the call. I verified the situation using official government channels and confirmed it was a scam attempt. The key was to avoid reacting under pressure and to use only trusted contacts.",
          "en", now),
-        ("CA: Email phishing pretending to be a bank", "Fraud/Scam",
+        ("Email phishing pretending to be a bank", "Fraud/Scam",
          "phishing,email,link,security,canada",
          "I got an email that looked like it was from my bank and asked me to click a link. I did not click it. Instead, I opened my banking app directly and checked for alerts, then used official support contacts to confirm. This helped me avoid phishing and keep my account secure.",
          "en", now),
-        ("CA: Account frozen after suspicious activity", "Fraud/Scam",
+        ("Account frozen after suspicious activity", "Fraud/Scam",
          "account,frozen,suspicious_activity,verification,canada",
          "My account access was restricted after unusual activity was detected. I followed the bank’s official verification steps and confirmed recent transactions. After identity checks, access was restored. I learned that quick verification through official channels is the safest way to resolve a freeze.",
          "en", now),
-        ("CA: Interac e-Transfer delayed or pending", "Transfers",
+        ("Interac e-Transfer delayed or pending", "Transfers",
          "interac,e-transfer,pending,delay,canada",
          "I sent an Interac e-Transfer and it did not arrive immediately. I checked the recipient details and whether the transfer was pending or on a security hold. I avoided sending duplicates and waited within the stated processing window. The transfer later completed, and I kept the reference details in case support was needed.",
          "en", now),
-        ("CA: Overdraft confusion and avoiding fees", "Fees",
+        ("Overdraft confusion and avoiding fees", "Fees",
          "overdraft,fees,negative_balance,avoid,canada",
          "I noticed my balance went negative and I was unsure what overdraft meant. I reviewed my account terms and learned how overdraft fees may apply. I adjusted alerts, monitored upcoming payments, and kept a buffer to avoid future surprises. Understanding the rules helped me prevent repeated fees.",
          "en", now),
-        ("CA: Unexpected monthly account fee", "Fees",
+        ("Unexpected monthly account fee", "Fees",
          "account_fee,monthly_fee,waiver,plan,canada",
          "I saw a monthly fee and did not expect it. I checked my account plan details and learned that fee waivers may depend on minimum balance or certain conditions. I compared account types and adjusted my plan to match my usage. This reduced unexpected charges going forward.",
          "en", now),
@@ -575,63 +584,63 @@ def ensure_demo_db_seeded_only() -> None:
 
     # USA 15 (English content)
     seed_cards += [
-        ("US: Opening a bank account (ID and proof basics)", "Onboarding",
+        ("Opening a bank account (ID and proof basics)", "Onboarding",
          "account,opening,id,documents,usa",
          "When opening a bank account in the US, I was asked for identification and basic proof details. I prepared government-issued ID and confirmed what the bank accepted for verification. I learned requirements vary by institution, so checking the bank’s official guidance helped me avoid surprises during onboarding.",
          "en", now),
-        ("US: No SSN yet – discussing options", "Onboarding",
+        ("No SSN yet – discussing options", "Onboarding",
          "ssn,itin,account,requirements,usa",
          "I did not have an SSN and was unsure if I could open an account. I asked the bank what alternatives were acceptable and learned some institutions may support different verification paths. I documented what the bank requested and followed official instructions to stay compliant with their process.",
          "en", now),
-        ("US: Online vs branch onboarding differences", "Onboarding",
+        ("Online vs branch onboarding differences", "Onboarding",
          "online,branch,verification,onboarding,usa",
          "I was deciding between opening an account online or at a branch. Online onboarding was faster but required strict identity verification steps. Branch onboarding allowed me to ask questions and clarify requirements in real time. I chose based on which path reduced confusion and improved confidence.",
          "en", now),
-        ("US: Mobile app login issues and device trust", "Digital Access",
+        ("Mobile app login issues and device trust", "Digital Access",
          "mobile,login,device,reset,usa",
          "I could not log in to my banking app after changing settings on my phone. I checked whether the device needed re-verification and used the app’s official recovery steps. I avoided repeated attempts that might lock the account. After verification, access returned and I enabled security notifications.",
          "en", now),
-        ("US: Why 2FA matters and what to do if it fails", "Digital Access",
+        ("Why 2FA matters and what to do if it fails", "Digital Access",
          "2fa,security,codes,access,usa",
          "I wondered why two-factor authentication was required. I learned it adds protection beyond a password. When a code did not arrive, I checked my contact settings and used official recovery steps. Keeping 2FA enabled reduced account takeover risk.",
          "en", now),
-        ("US: Shared device risks for banking apps", "Digital Access",
+        ("Shared device risks for banking apps", "Digital Access",
          "shared_device,privacy,security,logout,usa",
          "My family shared a device and I worried about privacy in banking apps. I learned that shared devices increase risk. I avoided saving passwords, logged out after sessions, and used device-level protections. When possible, using a personal device reduced accidental exposure.",
          "en", now),
-        ("US: Debit card declined at a merchant", "Cards",
+        ("Debit card declined at a merchant", "Cards",
          "debit,declined,limits,merchant,usa",
          "My debit card was declined unexpectedly. I checked whether I had reached a daily limit or whether the transaction was blocked for security. I reviewed account alerts and tried a smaller transaction. The issue was resolved after confirming activity through official channels.",
          "en", now),
-        ("US: First credit card basics and responsible use", "Cards",
+        ("First credit card basics and responsible use", "Cards",
          "credit_card,basics,limit,pay_on_time,usa",
          "I wanted my first credit card but was worried about mistakes. I learned that paying on time and keeping utilization low helps avoid problems. I started with a small limit and used alerts to track spending. Responsible use helped me build confidence and avoid fees.",
          "en", now),
-        ("US: Online purchases and fraud monitoring", "Payments",
+        ("Online purchases and fraud monitoring", "Payments",
          "online_payments,fraud,alerts,secure,usa",
          "I was unsure how safe online payments were. I enabled transaction alerts, used trusted merchants, and avoided saving payment details on unknown sites. When something looked suspicious, I checked official support guidance. Monitoring and quick reporting were key to staying safe.",
          "en", now),
-        ("US: IRS scam call recognition", "Fraud/Scam",
+        ("IRS scam call recognition", "Fraud/Scam",
          "irs,scam,phone,pressure,usa",
          "I received a call claiming to be from the IRS and demanding immediate action. I did not share personal data and ended the call. I verified through official government channels and learned that scam calls often use pressure tactics. Using trusted contacts prevented a costly mistake.",
          "en", now),
-        ("US: Person-to-person transfer scams (P2P risk)", "Fraud/Scam",
+        ("Person-to-person transfer scams (P2P risk)", "Fraud/Scam",
          "p2p,transfer,scam,irreversible,usa",
          "I learned that some person-to-person transfers can be hard to reverse. I verify recipients carefully before sending money and I avoid urgency tactics. When in doubt, I follow official guidance and I do not send funds until verification is clear.",
          "en", now),
-        ("US: Account locked after suspicious login", "Fraud/Scam",
+        ("Account locked after suspicious login", "Fraud/Scam",
          "account,locked,suspicious_login,reset,usa",
          "My account was locked after unusual login activity. I followed the official steps to verify identity and reset access. I reviewed recent activity and changed credentials using secure methods. After recovery, I enabled additional security protections to reduce repeat incidents.",
          "en", now),
-        ("US: Overdraft fees and avoiding repeat charges", "Fees",
+        ("Overdraft fees and avoiding repeat charges", "Fees",
          "overdraft,fees,balance,alerts,usa",
          "I was surprised by an overdraft fee and wanted to avoid it in the future. I learned to monitor my balance, set alerts, and keep a small buffer. I reviewed which transactions were pending versus posted. These habits helped reduce unexpected fees.",
          "en", now),
-        ("US: Understanding statements (pending vs posted)", "Statements",
+        ("Understanding statements (pending vs posted)", "Statements",
          "statement,pending,posted,charges,usa",
          "I found bank statements confusing and did not know why totals changed. I learned the difference between pending and posted transactions and how holds can affect available balance. Reviewing statement categories helped me spot unfamiliar charges early and take action quickly if needed.",
          "en", now),
-        ("US: Who to contact for support (branch vs hotline vs in-app)", "Support",
+        ("Who to contact for support (branch vs hotline vs in-app)", "Support",
          "support,branch,hotline,in_app,usa",
          "I was unsure who to contact when something went wrong. I use official support paths: in-app help for basic issues, hotline for urgent access problems, and a branch visit when identity verification is required. Choosing the right channel reduces delays.",
          "en", now),
@@ -653,7 +662,7 @@ ensure_demo_db_seeded_only()
 # ----------------------------
 # UI helpers (region/language, panels)
 # ----------------------------
-REGION_LANGS = {"ca": ["en", "fr"], "us": ["en", "es"]}
+REGION_LANGS = {"na": ["en"], "ca": ["en", "fr"], "us": ["en", "es"]}
 
 
 def build_lang_switch(region: str, lang: str, presentation: str) -> str:
@@ -688,7 +697,12 @@ def pick_db_path(presentation: str) -> str:
 
 
 def region_label(lang: str, region: str) -> str:
-    return t(lang, "region_ca") if region == "ca" else t(lang, "region_us")
+    if region == "ca":
+        return t(lang, "region_ca")
+    if region == "us":
+        return t(lang, "region_us")
+    return "North America"
+
 
 
 def _region_clause(region: str) -> Tuple[str, Tuple[Any, ...]]:
@@ -744,6 +758,7 @@ def latest_cards_panel(db_path: str, region: str, lang: str, presentation: str) 
 # Example questions (EN only for demo matching)
 # ----------------------------
 def example_questions(region: str) -> List[str]:
+    # Keep examples in EN to support "English-only matching" for demo
     if region == "us":
         return [
             "My debit card was declined at a store—what should I check first?",
@@ -753,13 +768,23 @@ def example_questions(region: str) -> List[str]:
             "I don’t recognize a transaction on my statement—what should I do?",
             "I’m not sure who to contact: in-app support, hotline, or branch?",
         ]
+    if region == "ca":
+        return [
+            "I’m new to Canada—what documents do I need to open a bank account?",
+            "I don’t have a SIN yet—can I still open an account?",
+            "My Interac e-Transfer is pending—what should I check?",
+            "I forgot my banking app password—how do I reset it safely?",
+            "I got an email that looks like it’s from my bank—should I click the link?",
+            "My card was declined—could it be a limit or a security hold?",
+        ]
+    # North America (default): neutral examples that can match across both sets
     return [
-        "I’m new to Canada—what documents do I need to open a bank account?",
-        "I don’t have a SIN yet—can I still open an account?",
-        "My Interac e-Transfer is pending—what should I check?",
-        "I forgot my banking app password—how do I reset it safely?",
-        "I got an email that looks like it’s from my bank—should I click the link?",
+        "I can’t log in to the mobile banking app—what steps can I try safely?",
         "My card was declined—could it be a limit or a security hold?",
+        "I received a suspicious call or email—how can I verify it safely?",
+        "A transfer is pending—what should I check before sending it again?",
+        "I was charged an overdraft fee—how can I avoid it next time?",
+        "I don’t recognize a transaction on my statement—what should I do?",
     ]
 
 
@@ -792,8 +817,8 @@ def confidence_label(score: float) -> str:
 
 
 def page_html(region: str, lang: str, presentation: str) -> str:
-    if region not in ("ca", "us"):
-        region = "ca"
+    if region not in ("na", "ca", "us"):
+        region = "na"
     allowed_langs = REGION_LANGS.get(region, ["en"])
     if lang not in allowed_langs:
         lang = "en"
@@ -802,6 +827,7 @@ def page_html(region: str, lang: str, presentation: str) -> str:
     title_text = t(lang, "app_title_demo") if pres_on else t(lang, "app_title")
 
     pills = f"""
+
       <span class="pill">{t(lang, "pill_safe")}</span>
       <span class="pill">{t(lang, "pill_retrieval")}</span>
     """
@@ -887,6 +913,7 @@ def page_html(region: str, lang: str, presentation: str) -> str:
       <div class="title">
         <h1>{escape_html(title_text)}</h1>
         <p>{escape_html(t(lang, "subtitle"))}</p>
+        <p class="meta" style="margin-top:4px;">{escape_html(t(lang, "na_note"))}</p>
         <div class="pills">{pills}</div>
       </div>
       <div class="panel" style="margin-top:0;">
@@ -1070,21 +1097,22 @@ def page_html(region: str, lang: str, presentation: str) -> str:
 # Routes
 # ----------------------------
 @app.get("/", response_class=HTMLResponse)
+
 def home(request: Request):
-    region = request.query_params.get("region", "ca").lower()
+    region = request.query_params.get("region", "na").lower()
     lang = request.query_params.get("lang", "en").lower()
-    presentation = request.query_params.get("presentation", "0")
+    presentation = request.query_params.get("presentation", "1")
     return HTMLResponse(page_html(region, lang, presentation))
 
 
 @app.get("/cards", response_class=HTMLResponse)
 def cards(request: Request):
-    region = request.query_params.get("region", "ca").lower()
+    region = request.query_params.get("region", "na").lower()
     lang = request.query_params.get("lang", "en").lower()
-    presentation = request.query_params.get("presentation", "0")
+    presentation = request.query_params.get("presentation", "1")
 
-    if region not in ("ca", "us"):
-        region = "ca"
+    if region not in ("na", "ca", "us"):
+        region = "na"
     if lang not in REGION_LANGS.get(region, ["en"]):
         lang = "en"
 
@@ -1156,16 +1184,16 @@ def cards(request: Request):
 
 @app.get("/admin", response_class=HTMLResponse)
 def admin(request: Request):
-    region = request.query_params.get("region", "ca").lower()
+    region = request.query_params.get("region", "na").lower()
     lang = request.query_params.get("lang", "en").lower()
-    presentation = request.query_params.get("presentation", "0")
+    presentation = request.query_params.get("presentation", "1")
 
     # Admin is only available in normal mode
     if presentation == "1":
         return RedirectResponse(url=f"/?region={region}&lang={lang}&presentation=1", status_code=303)
 
-    if region not in ("ca", "us"):
-        region = "ca"
+    if region not in ("na", "ca", "us"):
+        region = "na"
     if lang not in REGION_LANGS.get(region, ["en"]):
         lang = "en"
 
@@ -1271,9 +1299,9 @@ def admin_add(
     content: str = Form(...),
     content_lang: str = Form("en"),
 ):
-    region = request.query_params.get("region", "ca").lower()
+    region = request.query_params.get("region", "na").lower()
     lang = request.query_params.get("lang", "en").lower()
-    presentation = request.query_params.get("presentation", "0")
+    presentation = request.query_params.get("presentation", "1")
 
     if presentation == "1":
         raise HTTPException(status_code=403, detail="Admin is disabled in presentation mode.")
@@ -1313,8 +1341,8 @@ def ask(payload: Dict[str, Any]):
     lang = (payload.get("lang", "en") or "en").lower()
     presentation = (payload.get("presentation", "0") or "0")
 
-    if region not in ("ca", "us"):
-        region = "ca"
+    if region not in ("na", "ca", "us"):
+        region = "na"
     if lang not in REGION_LANGS.get(region, ["en"]):
         lang = "en"
 
@@ -1332,5 +1360,3 @@ def ask(payload: Dict[str, Any]):
     demo_region_filter = (presentation == "1")
     matches = get_top_matches(db_path, question, region=region, demo_region_filter=demo_region_filter, limit=MAX_MATCHES)
     return JSONResponse({"question": question, "matches": matches})
-
-
